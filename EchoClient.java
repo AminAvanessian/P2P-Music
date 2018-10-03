@@ -27,7 +27,7 @@ public class EchoClient {
             String userInput;
             while ((userInput = stdIn.readLine()) != null) {
                 out.println(userInput);
-                System.out.println("Echo Server Sent: " + in.readLine());
+                System.out.println("Bank Server Sent: " + in.readLine());
             }
         } catch (UnknownHostException e) {
             System.err.println("Don't know about host " + hostName);
