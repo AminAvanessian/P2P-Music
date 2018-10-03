@@ -104,9 +104,11 @@ class Connection extends Thread {
                 String[] userCommands = inputLine.split(" ");
                 String firstCommand = userCommands[0];
 
+                // text to return to client
                 String returnText = "Please choose a valid request: DEPOSIT | WITHDRAW | CHECK | TRANSFER";
 
-                
+                // get users balance
+                int usersBalance = BankServer.usersData.get(clientAddress);
 
                 switch(firstCommand) {
                     // deposit money
@@ -137,8 +139,6 @@ class Connection extends Thread {
                             break;
                         }
 
-                        int usersBalance = BankServer.usersData.get(clientAddress);
-
                         // check if user has enough money for withdrawl
                         if (amountWITH > usersBalance) {
                             // user does not have sufficient money for withdrawl
@@ -153,7 +153,8 @@ class Connection extends Thread {
                         break;
 
                     case BankServer.CHECK_BALANCE:
-                        System.out.println("YOU CHECK BALANCE!");
+                        // set return text to user
+                        returnText = "Your account balance is $" + usersBalance;
                         
                         break;
                     
