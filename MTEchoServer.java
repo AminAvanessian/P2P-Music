@@ -39,6 +39,7 @@ class BankServer {
     public static final String DEPOSIT_MONEY = "DEPOSIT";
     public static final String TRANSFER_MONEY = "TRANSFER";
     public static final String CHECK_BALANCE = "CHECK";
+    public static final String WITHDRAW_MONEY = "WITHDRAW";
 
     // transfer money from sender to receiver
     public static void transferMoney(String sender, String receiver, Integer amount) {
@@ -55,6 +56,15 @@ class BankServer {
 
         // add money to users account
         usersData.put(client, balance + amount);
+    }
+
+    // withdraw money
+    public static void withdrawMoney(String client, int amount) {
+        // get users bank balance
+        int balance = BankServer.usersData.get(client);
+
+        // add money to users account
+        usersData.put(client, balance - amount);
     }
 }
 
@@ -87,25 +97,59 @@ class Connection extends Thread {
          String clientAddress = clientSocketAddress.substring(1);
 
          // add user data to map
-         BankServer.usersData.put(clientAddress, 5000);
+         BankServer.usersData.put(clientAddress, 0);
 
          while ((inputLine = in.readLine()) != null) {
                 System.out.println("Received from: " + clientAddress + " Input: " + inputLine);
                 String[] userCommands = inputLine.split(" ");
                 String firstCommand = userCommands[0];
 
-                String returnText = "Please choose a valid request: DEPOSIT | CHECK | TRANSFER";
+                String returnText = "Please choose a valid request: DEPOSIT | WITHDRAW | CHECK | TRANSFER";
+
+                
 
                 switch(firstCommand) {
+                    // deposit money
                     case BankServer.DEPOSIT_MONEY:
                         // get transfer ammount
-                        int amount = Integer.parseInt(userCommands[1]);
+                        Integer amountDEP = tryParse(userCommands[1]);
+
+                        if (amountDEP == null) {
+                            // set return text to user
+                            returnText = "Please choose a valid value for deposit";
+                            break;
+                        }
 
                         // add money to users account 
-                        BankServer.depositMoney(clientAddress, amount);
+                        BankServer.depositMoney(clientAddress, amountDEP);
 
                         // set return text to user
-                        returnText = "$" + amount + " was deposited into your account";
+                        returnText = "$" + amountDEP + " was deposited into your account";
+                        break;
+
+                    // withdraw money
+                    case BankServer.WITHDRAW_MONEY:
+                        // get transfer ammount
+                        Integer amountWITH = tryParse(userCommands[1]);
+                            
+                        if (amountWITH == null) {
+                            returnText = "Please choose a valid value for withdrawl";
+                            break;
+                        }
+
+                        int usersBalance = BankServer.usersData.get(clientAddress);
+
+                        // check if user has enough money for withdrawl
+                        if (amountWITH > usersBalance) {
+                            // user does not have sufficient money for withdrawl
+                            returnText = "Insufficient funds for withdrawl, please choose a smaller amount";
+                        } else {
+                            BankServer.withdrawMoney(clientAddress, amountWITH);
+
+                            // set return text to user
+                            returnText = "$" + amountWITH + " was withdrawn from your account";
+                        }
+
                         break;
 
                     case BankServer.CHECK_BALANCE:
@@ -129,5 +173,13 @@ class Connection extends Thread {
            System.out.println("Exception caught...");
            System.out.println(e.getMessage());
        }
+    }
+
+    public static Integer tryParse(String text) {
+        try {
+          return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+          return null;
+        }
     }
 }
