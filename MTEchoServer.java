@@ -2,6 +2,7 @@ import java.net.*;
 import java.util.HashMap;
 import java.io.*;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
  
 public class MTEchoServer {
@@ -35,18 +36,29 @@ class BankServer {
     // user ip and amount of $
     public static Map<String,Integer> usersData = new HashMap<String,Integer>();  
 
+    // client transaction data
+    public static Map<String,List<String>> clientTransactions = new HashMap<String,List<String>>();
+
     // protocol commands
     public static final String DEPOSIT_MONEY = "DEPOSIT";
     public static final String TRANSFER_MONEY = "TRANSFER";
     public static final String CHECK_BALANCE = "CHECK";
     public static final String WITHDRAW_MONEY = "WITHDRAW";
+    public static final String TRANSACTIONS = "TRANSACTIONS";
 
     // transfer money from sender to receiver
     public static void transferMoney(String sender, String receiver, Integer amount) {
+        // get users bank balance
+        int balance = BankServer.usersData.get(sender);
+
+        // get receivers balance
+        int balance2 = BankServer.usersData.get(receiver);
+
         // subtract money from sender
+        usersData.put(sender, balance - amount);
 
         // add money to receiver
-
+        usersData.put(receiver, balance2 + amount);
     }
 
     // deposit money 
@@ -99,13 +111,24 @@ class Connection extends Thread {
          // add user data to map
          BankServer.usersData.put(clientAddress, 0);
 
+         Date dNow = new Date();
+         SimpleDateFormat ft = new SimpleDateFormat ("E yyyy.MM.dd 'at' hh:mm:ss a zzz");
+
+         // original transaction message
+         List original = new ArrayList();
+         original.add(0, ft.format(dNow) + " - " + "You have opened an account");
+
+         // add first transaction for client
+         BankServer.clientTransactions.put(clientAddress, original);
+
+         // server loop
          while ((inputLine = in.readLine()) != null) {
                 System.out.println("Received from: " + clientAddress + " Input: " + inputLine);
                 String[] userCommands = inputLine.split(" ");
                 String firstCommand = userCommands[0];
 
                 // text to return to client
-                String returnText = "Please choose a valid request: DEPOSIT | WITHDRAW | CHECK | TRANSFER";
+                String returnText = "Please choose a valid request:~DEPOSIT | WITHDRAW | CHECK | TRANSFER | TRANSACTIONS";
 
                 // get users balance
                 int usersBalance = BankServer.usersData.get(clientAddress);
@@ -113,6 +136,8 @@ class Connection extends Thread {
                 switch(firstCommand) {
                     // deposit money
                     case BankServer.DEPOSIT_MONEY:
+                        Date dNow1 = new Date();
+
                         // get transfer ammount
                         Integer amountDEP = tryParse(userCommands[1]);
 
@@ -127,10 +152,18 @@ class Connection extends Thread {
 
                         // set return text to user
                         returnText = "$" + amountDEP + " was deposited into your account";
+
+                        // add transaction to client transaction records
+                        List newTransactions = BankServer.clientTransactions.get(clientAddress);
+                        newTransactions.add(0, ft.format(dNow1) + " - " + returnText);
+                        BankServer.clientTransactions.put(clientAddress, newTransactions);
+
                         break;
 
                     // withdraw money
                     case BankServer.WITHDRAW_MONEY:
+                        Date dNow2 = new Date();
+
                         // get transfer ammount
                         Integer amountWITH = tryParse(userCommands[1]);
                             
@@ -148,6 +181,11 @@ class Connection extends Thread {
 
                             // set return text to user
                             returnText = "$" + amountWITH + " was withdrawn from your account";
+
+                            // add transaction to client transaction records
+                            List newTransactions2 = BankServer.clientTransactions.get(clientAddress);
+                            newTransactions2.add(0, ft.format(dNow2) + " - " + returnText);
+                            BankServer.clientTransactions.put(clientAddress, newTransactions2);
                         }
 
                         break;
@@ -159,17 +197,73 @@ class Connection extends Thread {
                         break;
                     
                     case BankServer.TRANSFER_MONEY: 
-                        System.out.println("YOU TRANSFER MONEY");
+                        Date dNow3 = new Date();
+
+                        if (userCommands.length < 4) {
+                            returnText = "Not enough arguments for money transfer.~Format: TRANSFER # TO IP:SOCKET#";
+                            break;
+                        }
+
+                        // get transfer ammount
+                        Integer transferAmount = tryParse(userCommands[1]);
+                        String transferReceiver = userCommands[3];
+
+                        if (transferAmount == null || transferReceiver == "") {
+                            returnText = "Incorrect format for money transfer.~Format: TRANSFER $$$ TO IP:SOCKET#";
+                            break;
+                        }
+
+                        // check if receiving user exists
+                        Integer receiver = BankServer.usersData.get(transferReceiver);
+
+                        if (receiver == null) {
+                            returnText = "Receiver not found, please try a different user";
+                            break;
+                        }
+
+                        if (transferAmount > usersBalance) {
+                            returnText = "Insufficient funds for transfer, please choose lower amount";
+                            break;
+                        }
+
+                        BankServer.transferMoney(clientAddress, transferReceiver, transferAmount);
+
+                        returnText = "$" + transferAmount + " transferred to " + transferReceiver + " successfully";
+
+                        String msgToSender = "$" + transferAmount + " was transferred to " + transferReceiver;
+                        String msgToReceiver = transferReceiver + " transferred $" + transferAmount + " to your account";
+
+                        // add transaction to sender transaction records
+                        List newTransactions3 = BankServer.clientTransactions.get(clientAddress);
+                        newTransactions3.add(0, ft.format(dNow3) + " - " + msgToSender);
+                        BankServer.clientTransactions.put(clientAddress, newTransactions3);
+
+                        // add transaction to receiver transaction records
+                        List newTransactions4 = BankServer.clientTransactions.get(transferReceiver);
+                        newTransactions4.add(0, ft.format(dNow3) + " - " + msgToReceiver);
+                        BankServer.clientTransactions.put(transferReceiver, newTransactions4);
+
+                        break;
                     
+                    case BankServer.TRANSACTIONS:
+                        List<String> clientTransactions = BankServer.clientTransactions.get(clientAddress);
+
+                        returnText = "";
+
+                        for (String trans : clientTransactions) {
+                            returnText = returnText + trans + "~";
+                        }
+
                         break;
                 }
                 out.println(returnText);
 
-            for (Map.Entry m:BankServer.usersData.entrySet()) {  
-                System.out.println(m.getKey()+" "+m.getValue());  
-            }  
+            for (Map.Entry m : BankServer.usersData.entrySet()) {  
+                System.out.println("User " + m.getKey() + " has $" + m.getValue());
+            }
          }
          client.close();
+
        } catch (IOException e) {
            System.out.println("Exception caught...");
            System.out.println(e.getMessage());

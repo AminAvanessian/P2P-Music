@@ -27,7 +27,18 @@ public class EchoClient {
             String userInput;
             while ((userInput = stdIn.readLine()) != null) {
                 out.println(userInput);
-                System.out.println("Bank Server Sent: " + in.readLine());
+
+                String[] serverResponses = in.readLine().split("~");
+
+                System.out.println();
+                System.out.println("- Bank server response:");
+                System.out.println("-------------------------");
+
+                for (String res : serverResponses) {
+                    System.out.println(res);
+                }
+
+                System.out.println();
             }
         } catch (UnknownHostException e) {
             System.err.println("Don't know about host " + hostName);
