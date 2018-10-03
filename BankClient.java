@@ -1,7 +1,7 @@
 import java.io.*;
 import java.net.*;
  
-public class EchoClient {
+public class BankClient {
     public static void main(String[] args) {
          
         if (args.length != 2) {

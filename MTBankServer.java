@@ -5,7 +5,7 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
  
-public class MTEchoServer {
+public class MTBankServer {
 
     public static void main(String[] args) {
          
@@ -221,7 +221,14 @@ class Connection extends Thread {
                             break;
                         }
 
+                        if (transferReceiver == clientAddress) {
+                            // client is trying to transfer money to themselves which is not allowed
+                            returnText = "You cannot transfer money to yourself";
+                            break;
+                        }
+
                         if (transferAmount > usersBalance) {
+                            // client does not have enough money to transfer
                             returnText = "Insufficient funds for transfer, please choose lower amount";
                             break;
                         }
