@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 
  
 public class MTBankServer {
-
     public static void main(String[] args) {
          
         if (args.length != 1) {
@@ -15,7 +14,7 @@ public class MTBankServer {
         }
          
         int portNumber = Integer.parseInt(args[0]);
-        MTEchoServer es = new MTEchoServer();
+        MTBankServer es = new MTBankServer();
         es.startServer(portNumber);
      }
 

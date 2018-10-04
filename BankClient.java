@@ -29,15 +29,28 @@ public class BankClient {
                 out.println(userInput);
 
                 String[] serverResponses = in.readLine().split("~");
+                String[] userMessage = userInput.split(" ");
 
                 System.out.println();
                 System.out.println("- Bank server response:");
                 System.out.println("-------------------------");
 
+                // iterate through lines sent back from server
                 for (String res : serverResponses) {
                     System.out.println(res);
                 }
 
+                // save transactions to local text file
+                if (userMessage[0].equals("TRANSACTIONS")) {
+                    BufferedWriter fileWrite = new BufferedWriter(new FileWriter("./transactions.txt"));
+                    
+                    // save each line of client transactions to text file
+                    for (String res : serverResponses) {
+                        fileWrite.write(res);
+                        fileWrite.newLine();
+                    }
+                    fileWrite.close();
+                }
                 System.out.println();
             }
         } catch (UnknownHostException e) {
