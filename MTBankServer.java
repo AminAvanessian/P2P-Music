@@ -9,12 +9,13 @@ public class MTBankServer {
     public static void main(String[] args) {
          
         if (args.length != 1) {
-            System.err.println("Usage: java EchoServer <port number>");
+            System.err.println("Usage: java MTBankServer <port number>");
             System.exit(1);
         }
          
         int portNumber = Integer.parseInt(args[0]);
         MTBankServer es = new MTBankServer();
+
         es.startServer(portNumber);
      }
 
@@ -94,11 +95,11 @@ class Connection extends Thread {
            try {
              client.close();
            } catch (IOException ex) {
-             System.out.println("Error while getting socket streams.." + ex);
+             System.out.println("Got an error getting socket streams.." + ex);
            }
            return;
        }
-        this.start(); // Thread starts here...this start() will call run()
+        this.start();
     }
  
     public void run() {
@@ -122,7 +123,7 @@ class Connection extends Thread {
 
          // server loop
          while ((inputLine = in.readLine()) != null) {
-                System.out.println("Received from: " + clientAddress + " Input: " + inputLine);
+                System.out.println("client: " + clientAddress + " Message: " + inputLine);
                 String[] userCommands = inputLine.split(" ");
                 String firstCommand = userCommands[0];
 
@@ -231,7 +232,7 @@ class Connection extends Thread {
                             returnText = "Insufficient funds for transfer, please choose lower amount";
                             break;
                         }
-
+                        // transfer money from client to receiver
                         BankServer.transferMoney(clientAddress, transferReceiver, transferAmount);
 
                         returnText = "$" + transferAmount + " transferred to " + transferReceiver + " successfully";
@@ -271,11 +272,12 @@ class Connection extends Thread {
          client.close();
 
        } catch (IOException e) {
-           System.out.println("Exception caught...");
+           System.out.println("Exception has been caught...");
            System.out.println(e.getMessage());
        }
     }
 
+    // try converting string to integer
     public static Integer tryParse(String text) {
         try {
           return Integer.parseInt(text);
