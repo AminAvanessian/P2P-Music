@@ -90,10 +90,9 @@ public class UDPMulticastServer implements Runnable {
                 String responseText = new String(resData, StandardCharsets.UTF_8);
     
                 System.out.println("Message received is: " + responseText);
-                System.out.println();
 
                 // check if peer has song
-                if (responseText.equals("Confirm")) {
+                if (responseText.trim().equals("Confirm")) {
                     // peer has confirmed that they have the song the user is looking for
                     // accept file
                     Socket incomingFileSocket = new Socket(userIP, 4322);
@@ -137,7 +136,7 @@ public class UDPMulticastServer implements Runnable {
         while (true) {
             buffer = null;
             buffer = new byte[2048];
-            
+
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
 
