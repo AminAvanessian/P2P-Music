@@ -72,7 +72,7 @@ public class UDPMulticastServer implements Runnable {
 
         while (true) {
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-          //  socket.setSoTimeout(5000);  // timeout after 5 seconds
+            socket.setSoTimeout(5000);  // timeout after 5 seconds
             try {
                 socket.receive(responsePacket);
             } catch (SocketTimeoutException ex) {
@@ -88,7 +88,7 @@ public class UDPMulticastServer implements Runnable {
                 byte[] resData = responsePacket.getData();  // full data in packet
                 String responseText = new String(resData, StandardCharsets.UTF_8);
     
-                System.out.println("Packet received from: " + userIP);
+            //    System.out.println("Packet received from: " + userIP);
                 System.out.println("Message received is: " + responseText);
                 System.out.println();
 
@@ -144,15 +144,15 @@ public class UDPMulticastServer implements Runnable {
             String userAddress = packet.getSocketAddress().toString().substring(1);
             String userIP = userAddress.substring(0, userAddress.indexOf(":"));
 
-            byte[] data = packet.getData();  // full data in packet
-
-            // song name that the peer is looking for
-            String msg = new String(data, StandardCharsets.UTF_8);
-
             String address = InetAddress.getLocalHost().toString();
             String myIP = address.substring(address.indexOf("/")+1, address.length());
 
             if (!userIP.equals(myIP)) {
+                 byte[] data = packet.getData();  // full data in packet
+
+                // song name that the peer is looking for
+                String msg = new String(data, StandardCharsets.UTF_8);
+
                 System.out.println("Message is: " + msg);
 
                 // let peer know that we have the song the peer is looking for
