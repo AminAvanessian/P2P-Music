@@ -118,7 +118,7 @@ public class UDPMulticastServer implements Runnable {
                     bos.close();
                     fos.close();
 
-                    System.out.println("File saved successfully!"); 
+                //    System.out.println("File saved successfully!"); 
 
                     // add song to local db
                     userMusic.add(message);
@@ -165,7 +165,7 @@ public class UDPMulticastServer implements Runnable {
                 // song name that the peer is looking for
                 String msg = new String(data, StandardCharsets.UTF_8);
 
-                System.out.println("Message is: " + msg);
+            //    System.out.println("Message is: " + msg);
 
                 // let peer know that we have the song the peer is looking for
                 if (userMusic.contains(msg.trim())) {
