@@ -167,7 +167,7 @@ public class UDPMulticastServer implements Runnable {
                     System.out.println("server socket opened...");
 
                     //Specify the file
-                    File file = new File("/Music/" + msg + ".mp3");
+                    File file = new File("Music", msg + ".mp3");
                     FileInputStream fis = new FileInputStream(file);
                     BufferedInputStream bis = new BufferedInputStream(fis); 
                     
