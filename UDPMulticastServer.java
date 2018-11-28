@@ -148,7 +148,7 @@ public class UDPMulticastServer implements Runnable {
             String myIP = address.substring(address.indexOf("/")+1, address.length());
 
             if (!userIP.equals(myIP)) {
-                 byte[] data = packet.getData();  // full data in packet
+                byte[] data = packet.getData();  // full data in packet
 
                 // song name that the peer is looking for
                 String msg = new String(data, StandardCharsets.UTF_8);
@@ -203,8 +203,7 @@ public class UDPMulticastServer implements Runnable {
                 }
             }
 
-            if ("OK".equals(msg)) {
-                System.out.println("No more message. Exiting : " + msg);
+            if ("OK".equals("no")) {
                 break;
             }
         }
