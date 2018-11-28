@@ -7,7 +7,10 @@ import java.net.MulticastSocket;
 import java.nio.file.*;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.ServerSocket;
+import java.io.Console;
+
 
 /* 
     P2P Protocol
@@ -44,6 +47,19 @@ public class UDPMulticastServer implements Runnable {
 
 
     public static void searchForSongOnNetwork(String message, String ipAddress, int port) throws IOException {
+        System.out.println("Searching for song...");
+
+        if (userMusic.contains(message)) {
+            System.out.println("Found song!");
+
+            // play song
+            playSong(message + ".mp3");
+
+            serveUserRequests();
+            
+            return;
+        }
+
         // ask who has the song
         MulticastSocket socket = new MulticastSocket(4321);
         InetAddress group = InetAddress.getByName(ipAddress);
@@ -62,9 +78,15 @@ public class UDPMulticastServer implements Runnable {
         // get response from network
         byte[] buffer = new byte[2048];
 
+
         while (true) {
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-            socket.receive(responsePacket);
+            socket.setSoTimeout(5000);  // timeout after 5 seconds
+            try {
+                socket.receive(responsePacket);
+            } catch (SocketTimeoutException ex) {
+                break;
+            }
 
             // get the IP of the sender
             String userAddress = responsePacket.getSocketAddress().toString().substring(1);
@@ -79,6 +101,7 @@ public class UDPMulticastServer implements Runnable {
                 System.out.println("Message received is: " + responseText);
                 System.out.println();
 
+                // check if peer has song
                 if (responseText.equals("Confirm")) {
                     // peer has confirmed that they have the song the user is looking for
                     // accept file
@@ -86,94 +109,162 @@ public class UDPMulticastServer implements Runnable {
                     byte[] contents = new byte[10000];
 
                     // initialize the FileOutputStream to the output file's full path.
-                    FileOutputStream fos = new FileOutputStream("message.mp3");
+                    FileOutputStream fos = new FileOutputStream(message + ".mp3");
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     InputStream is = incomingFileSocket.getInputStream();
 
-                    // no of bytes read in one read() call
-                    int bytesRead = 0; 
-
+                    // read file bytes
+                    int bytesRead = 0;
                     while((bytesRead = is.read(contents)) != -1) {
                         bos.write(contents, 0, bytesRead); 
                     }
-
                     bos.flush(); 
                     incomingFileSocket.close(); 
 
                     System.out.println("File saved successfully!"); 
+
+                    // play song
+                    playSong(message + ".mp3");
                 }
             }
 
-            if (userIP == "123") {
+            if (userIP == "") {
                 break;
             }
         }
-
+        System.out.println("song not found");
         socket.close();
-
-        /*
-        //Initialize Sockets
-        ServerSocket ssock = new ServerSocket(4322);
-        Socket mySocket = ssock.accept();
-        System.out.println("server socket opened...");
-
-        //Specify the file
-        File file = new File("music.mp3");
-        FileInputStream fis = new FileInputStream(file);
-        BufferedInputStream bis = new BufferedInputStream(fis); 
-          
-        //Get socket's output stream
-        OutputStream os = mySocket.getOutputStream();
-                
-        //Read File Contents into contents array 
-        byte[] contents1;
-        long fileLength = file.length(); 
-        long current = 0;
-         
-        long start = System.nanoTime();
-        
-        while(current != fileLength) { 
-            int size = 10000;
-            if (fileLength - current >= size)
-                current += size;    
-            else { 
-                size = (int)(fileLength - current); 
-                current = fileLength;
-            } 
-            contents1 = new byte[size]; 
-            bis.read(contents1, 0, size); 
-            os.write(contents1);
-            System.out.print("Sending file ... "+(current*100)/fileLength+"% complete!");
-        }   
-        
-        // os.flush(); 
-        // //File transfer done. Close the socket connection!
-        // mySocket.close();
-        // ssock.close();
-        // System.out.println("File sent succesfully!");
-*/
-
-        
+        serveUserRequests();
     }
 
     public void receiveUDPMessage(String ip, int port) throws IOException {
+        byte[] buffer = new byte[2048];
+        MulticastSocket socket = new MulticastSocket(4321);
+        InetAddress group = InetAddress.getByName(ipAddress);
+        socket.joinGroup(group);
+        
+        while (true) {
+         //   System.out.println("Waiting for multicast message...");
 
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            socket.receive(packet);
+
+            // print the IP of the sender
+            String userAddress = packet.getSocketAddress().toString().substring(1);
+            String userIP = userAddress.substring(0, userAddress.indexOf(":"));
+
+            byte[] data = packet.getData();  // full data in packet
+
+            String msg = new String(data, StandardCharsets.UTF_8);
+
+        //    System.out.println("Message is: " + msg.trim());
+        //    System.out.println();
+
+            String address = InetAddress.getLocalHost().toString();
+            String myIP = address.substring(address.indexOf("/")+1, address.length());
+
+            if (!userIP.equals(myIP)) {
+                // user has the song the peer is looking for
+                if (userMusic.contains(msg)) {
+                    String myMessage = "I have that song!";
+                    byte[] myBytes = myMessage.getBytes();
+                    DatagramPacket requestPacket = new DatagramPacket(myBytes, myBytes.length, group, port);
+                    socket.send(requestPacket);
+
+
+                    ServerSocket ssock = new ServerSocket(4322);
+                    Socket mySocket = ssock.accept();
+                    System.out.println("server socket opened...");
+
+                    //Specify the file
+                    File file = new File("music.mp3");
+                    FileInputStream fis = new FileInputStream(file);
+                    BufferedInputStream bis = new BufferedInputStream(fis); 
+                    
+                    //Get socket's output stream
+                    OutputStream os = mySocket.getOutputStream();
+                            
+                    //Read File Contents into contents array 
+                    byte[] contents1;
+                    long fileLength = file.length(); 
+                    long current = 0;
+                    
+                    long start = System.nanoTime();
+                    
+                    while(current != fileLength) { 
+                        int size = 10000;
+                        if (fileLength - current >= size)
+                            current += size;    
+                        else { 
+                            size = (int) (fileLength - current); 
+                            current = fileLength;
+                        } 
+                        contents1 = new byte[size]; 
+                        bis.read(contents1, 0, size); 
+                        os.write(contents1);
+                        System.out.print("Sending file ... " + (current*100) / fileLength + "% complete!");
+                    }   
+                    
+                    os.flush();
+                    // file transfer done, close the socket connection
+                    mySocket.close();
+                    ssock.close();
+                }
+            }
+
+            if ("OK".equals(msg)) {
+                System.out.println("No more message. Exiting : " + msg);
+                break;
+            }
+        }
+        socket.leaveGroup(group);
+        socket.close();
+    }
+
+    public static void getAllMusic() {
+        File[] files = new File("Music").listFiles();
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // is directory
+            } else {
+                String ext = file.getName().substring(file.getName().length()-3, file.getName().length());
+                String fileName = file.getName().substring(0, file.getName().length()-4);
+
+                if (ext.equals("mp3")) {
+                    // save mp3 file to hashset
+                    userMusic.add(fileName);
+                }
+            }
+        }
+    }
+
+    public static void playSong(String songName) {
+
+    }
+
+    public static void serveUserRequests() {
+        System.out.print("Enter song name: ");
+        Console console = System.console();
+        String songName = console.readLine();
+        
+        try {
+            searchForSongOnNetwork(songName, ipAddress, 4321);
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
     }
 
     public static void main(String[] args) throws IOException {
         // get list of user's songs in directory
+        getAllMusic();
 
-        // start listening for requests on the network
-        Thread t = new Thread(new UDPMulticastClient());
+        // start listening for requests on the network on a new thread
+        Thread t = new Thread(new UDPMulticastServer());
         t.start();
 
         // listen to user's commands
-
-        searchForSongOnNetwork("keke - 6ix9ine", ipAddress, 4321);
-    }
-
-    public static void getAllMusic() {
-
+        serveUserRequests();
     }
 
     @Override
