@@ -16,19 +16,9 @@ import java.io.Console;
     P2P Protocol
     ------------
 
-    Client Methods
-    - requestSong(): request .mp3 file from clients to see who has the song
-    - confirmSong(): let requestor know that client has the song they are looking for
-    - receiveSong(): receive .mp3 file from client (sender)
-    - sendSong(): send .mp3 file to requestor  
-    - songNotFound(): let requestor know that client no longer has the .mp3 file
-    - getLocalSongs(): get local .mp3 files owned by the client on start-up
-    - receiveUDPMessage(): receive UDP message from other client(s)
-    - playSong(): play .mp3 song for user
-
     Message Targets
-    - ALL (0): Message that is intended for all clients on the P2P network
-    - DIRECTED (1): Message that is intended for a specific client on the P2P Network
+    - ALL (UDP): Message that is intended for all clients on the P2P network
+    - DIRECTED (TCP): Message that is intended for a specific client on the P2P Network for downloading song file
 
     Message Types
     - Request
@@ -55,6 +45,7 @@ public class UDPMulticastServer implements Runnable {
             // play song
             playSong(message + ".mp3");
 
+            // ask user for next song to play
             serveUserRequests();
             
             return;
@@ -155,29 +146,26 @@ public class UDPMulticastServer implements Runnable {
 
             byte[] data = packet.getData();  // full data in packet
 
+            // song name that the peer is looking for
             String msg = new String(data, StandardCharsets.UTF_8);
-
-        //    System.out.println("Message is: " + msg.trim());
-        //    System.out.println();
 
             String address = InetAddress.getLocalHost().toString();
             String myIP = address.substring(address.indexOf("/")+1, address.length());
 
             if (!userIP.equals(myIP)) {
-                // user has the song the peer is looking for
+                // let peer know that we have the song the peer is looking for
                 if (userMusic.contains(msg)) {
-                    String myMessage = "I have that song!";
+                    String myMessage = "Confirm";
                     byte[] myBytes = myMessage.getBytes();
                     DatagramPacket requestPacket = new DatagramPacket(myBytes, myBytes.length, group, port);
                     socket.send(requestPacket);
-
 
                     ServerSocket ssock = new ServerSocket(4322);
                     Socket mySocket = ssock.accept();
                     System.out.println("server socket opened...");
 
                     //Specify the file
-                    File file = new File("music.mp3");
+                    File file = new File("Music/" + msg + ".mp3");
                     FileInputStream fis = new FileInputStream(file);
                     BufferedInputStream bis = new BufferedInputStream(fis); 
                     
@@ -206,6 +194,7 @@ public class UDPMulticastServer implements Runnable {
                     }   
                     
                     os.flush();
+                    bis.close();
                     // file transfer done, close the socket connection
                     mySocket.close();
                     ssock.close();
