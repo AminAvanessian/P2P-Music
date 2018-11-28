@@ -72,7 +72,7 @@ public class UDPMulticastServer implements Runnable {
 
         while (true) {
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-            socket.setSoTimeout(5000);  // timeout after 5 seconds
+          //  socket.setSoTimeout(5000);  // timeout after 5 seconds
             try {
                 socket.receive(responsePacket);
             } catch (SocketTimeoutException ex) {
@@ -153,8 +153,10 @@ public class UDPMulticastServer implements Runnable {
             String myIP = address.substring(address.indexOf("/")+1, address.length());
 
             if (!userIP.equals(myIP)) {
+                System.out.println("Message is: " + msg);
+
                 // let peer know that we have the song the peer is looking for
-                if (userMusic.contains(msg)) {
+                if (userMusic.contains(msg.trim())) {
                     String myMessage = "Confirm";
                     byte[] myBytes = myMessage.getBytes();
                     DatagramPacket requestPacket = new DatagramPacket(myBytes, myBytes.length, group, port);
@@ -223,6 +225,7 @@ public class UDPMulticastServer implements Runnable {
                 if (ext.equals("mp3")) {
                     // save mp3 file to hashset
                     userMusic.add(fileName);
+                    System.out.println(fileName);
                 }
             }
         }
