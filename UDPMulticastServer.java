@@ -205,7 +205,7 @@ public class UDPMulticastServer implements Runnable {
                         contents1 = new byte[size]; 
                         bis.read(contents1, 0, size); 
                         os.write(contents1);
-                        System.out.print("Sending file ... " + (current*100) / fileLength + "% complete!");
+                   //     System.out.print("Sending file ... " + (current*100) / fileLength + "% complete!");
                     }   
                     
                     os.flush();
