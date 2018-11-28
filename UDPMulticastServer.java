@@ -99,7 +99,7 @@ public class UDPMulticastServer implements Runnable {
                     byte[] contents = new byte[10000];
 
                     // initialize the FileOutputStream to the output file's full path.
-                    FileOutputStream fos = new FileOutputStream(message + ".mp3");
+                    FileOutputStream fos = new FileOutputStream("Music/" + message + ".mp3");
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     InputStream is = incomingFileSocket.getInputStream();
 
@@ -110,6 +110,8 @@ public class UDPMulticastServer implements Runnable {
                     }
                     bos.flush(); 
                     incomingFileSocket.close(); 
+                    bos.close();
+                    fos.close();
 
                     System.out.println("File saved successfully!"); 
 
@@ -164,10 +166,11 @@ public class UDPMulticastServer implements Runnable {
 
                     ServerSocket ssock = new ServerSocket(4322);
                     Socket mySocket = ssock.accept();
-                    System.out.println("server socket opened...");
+                    System.out.println("server socket opened..." + msg);
 
                     //Specify the file
-                    File file = new File("Music", msg + ".mp3");
+                    File musicDir = new File("Music");
+                    File file = new File(musicDir, msg.trim() + ".mp3");
                     FileInputStream fis = new FileInputStream(file);
                     BufferedInputStream bis = new BufferedInputStream(fis); 
                     
