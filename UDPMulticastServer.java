@@ -135,8 +135,9 @@ public class UDPMulticastServer implements Runnable {
         socket.joinGroup(group);
         
         while (true) {
-         //   System.out.println("Waiting for multicast message...");
-
+            buffer = null;
+            buffer = new byte[2048];
+            
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
 
