@@ -176,7 +176,7 @@ public class UDPMulticastServer implements Runnable {
 
                     ServerSocket ssock = new ServerSocket(4322);
                     Socket mySocket = ssock.accept();
-                    System.out.println("server socket opened..." + msg);
+                //    System.out.println("server socket opened..." + msg);
 
                     //Specify the file
                     File musicDir = new File("Music");
