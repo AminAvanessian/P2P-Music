@@ -67,10 +67,11 @@ public class UDPMulticastServer implements Runnable {
         String currentUserIP = currentAddress.substring(currentAddress.indexOf("/")+1, currentAddress.length());
 
         // get response from network
-        byte[] buffer = new byte[2048];
-
+        
 
         while (true) {
+            byte[] buffer = new byte[2048];
+            
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
             socket.setSoTimeout(5000);  // timeout after 5 seconds
             try {
@@ -88,7 +89,6 @@ public class UDPMulticastServer implements Runnable {
                 byte[] resData = responsePacket.getData();  // full data in packet
                 String responseText = new String(resData, StandardCharsets.UTF_8);
     
-            //    System.out.println("Packet received from: " + userIP);
                 System.out.println("Message received is: " + responseText);
                 System.out.println();
 
