@@ -115,6 +115,9 @@ public class UDPMulticastServer implements Runnable {
 
                     System.out.println("File saved successfully!"); 
 
+                    // add song to local db
+                    userMusic.add(message);
+
                     // play song
                     playSong(message + ".mp3");
                 }
