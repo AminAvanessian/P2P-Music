@@ -35,51 +35,79 @@ import java.net.ServerSocket;
     - NotFound
 */
 
-public class UDPMulticastServer {
+public class UDPMulticastServer implements Runnable {
+    // broadcast IP address
     static String ipAddress = "230.0.0.0";
 
-    public static void sendUDPMessage(String message, String ipAddress, int port) throws IOException {
+    // collection of songs owned by the user
+    static HashSet<String> userMusic = new HashSet<String>();
+
+
+    public static void searchForSongOnNetwork(String message, String ipAddress, int port) throws IOException {
         // ask who has the song
         MulticastSocket socket = new MulticastSocket(4321);
         InetAddress group = InetAddress.getByName(ipAddress);
 
-        message = "Keke - 6ix9ine";
-
-        // Path path = Paths.get("music.mp3");
-        // byte[] musicBuff = Files.readAllBytes(path);
-       // byte[] target = "10".getBytes();    // target & type
-
-        byte[] msg = message.getBytes();    // message
-
-        // // full data to send
-        // byte[] fullData = new byte[target.length + msg.length];
-        // System.arraycopy(target, 0, fullData, 0, target.length);
-        // System.arraycopy(msg, 0, fullData, target.length, msg.length); 
+        // message byte array
+        byte[] msg = message.getBytes(); 
 
         DatagramPacket requestPacket = new DatagramPacket(msg, msg.length, group, port);
-
-
-        byte[] buffer = new byte[2048];
         socket.joinGroup(group);
-
         socket.send(requestPacket);
 
-
+        // get current user's IP address
+        String currentAddress = InetAddress.getLocalHost().toString();
+        String currentUserIP = currentAddress.substring(currentAddress.indexOf("/")+1, currentAddress.length());
 
         // get response from network
-        DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-        
-        socket.receive(responsePacket);
+        byte[] buffer = new byte[2048];
 
-        // print the IP of the sender
-        String userAddress = responsePacket.getSocketAddress().toString().substring(1);
-        String userIP = userAddress.substring(0, userAddress.indexOf(":"));
-        byte[] resData = responsePacket.getData();  // full data in packet
-        String responseText = new String(resData, StandardCharsets.UTF_8);
+        while (true) {
+            DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+            socket.receive(responsePacket);
 
-        System.out.println("Packet received from: " + userIP);
-        System.out.println("Message received is: " + responseText);
-        System.out.println();
+            // get the IP of the sender
+            String userAddress = responsePacket.getSocketAddress().toString().substring(1);
+            String userIP = userAddress.substring(0, userAddress.indexOf(":"));
+            
+            // check if message received is from current user
+            if (!userIP.equals(currentUserIP)) {
+                byte[] resData = responsePacket.getData();  // full data in packet
+                String responseText = new String(resData, StandardCharsets.UTF_8);
+    
+                System.out.println("Packet received from: " + userIP);
+                System.out.println("Message received is: " + responseText);
+                System.out.println();
+
+                if (responseText.equals("Confirm")) {
+                    // peer has confirmed that they have the song the user is looking for
+                    // accept file
+                    Socket incomingFileSocket = new Socket(userIP, 4322);
+                    byte[] contents = new byte[10000];
+
+                    // initialize the FileOutputStream to the output file's full path.
+                    FileOutputStream fos = new FileOutputStream("message.mp3");
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+                    InputStream is = incomingFileSocket.getInputStream();
+
+                    // no of bytes read in one read() call
+                    int bytesRead = 0; 
+
+                    while((bytesRead = is.read(contents)) != -1) {
+                        bos.write(contents, 0, bytesRead); 
+                    }
+
+                    bos.flush(); 
+                    incomingFileSocket.close(); 
+
+                    System.out.println("File saved successfully!"); 
+                }
+            }
+
+            if (userIP == "123") {
+                break;
+            }
+        }
 
         socket.close();
 
@@ -123,33 +151,37 @@ public class UDPMulticastServer {
         // mySocket.close();
         // ssock.close();
         // System.out.println("File sent succesfully!");
+*/
 
+        
+    }
 
+    public void receiveUDPMessage(String ip, int port) throws IOException {
 
-
-        // accept file
-        Socket incomingFileSocket = new Socket(userIP, 4322);
-        byte[] contents = new byte[10000];
-        
-        // initialize the FileOutputStream to the output file's full path.
-        FileOutputStream fos = new FileOutputStream("musicNEW.mp3");
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
-        InputStream is = incomingFileSocket.getInputStream();
-        
-        // no of bytes read in one read() call
-        int bytesRead = 0; 
-        
-        while((bytesRead = is.read(contents)) != -1) {
-            bos.write(contents, 0, bytesRead); 
-        }
-        
-        bos.flush(); 
-        incomingFileSocket.close(); 
-        
-        System.out.println("File saved successfully!"); */
     }
 
     public static void main(String[] args) throws IOException {
-        sendUDPMessage("This is a multicast messge", ipAddress, 4321);
+        // get list of user's songs in directory
+
+        // start listening for requests on the network
+        Thread t = new Thread(new UDPMulticastClient());
+        t.start();
+
+        // listen to user's commands
+
+        searchForSongOnNetwork("keke - 6ix9ine", ipAddress, 4321);
+    }
+
+    public static void getAllMusic() {
+
+    }
+
+    @Override
+    public void run() {
+       try {
+          receiveUDPMessage(ipAddress, 4321);
+       } catch (IOException ex) {
+          ex.printStackTrace();
+       }
     }
 }
