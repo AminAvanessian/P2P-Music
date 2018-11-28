@@ -25,7 +25,6 @@ import java.io.Console;
     - Confirm
     - Send
     - Receive
-    - NotFound
 */
 
 public class UDPMulticastServer implements Runnable {
@@ -67,9 +66,13 @@ public class UDPMulticastServer implements Runnable {
         String currentUserIP = currentAddress.substring(currentAddress.indexOf("/")+1, currentAddress.length());
 
         // get response from network
-        
+        boolean didFindSong = false;
 
         while (true) {
+            if (didFindSong) {
+                break;
+            }
+
             byte[] buffer = new byte[2048];
             
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
@@ -89,11 +92,13 @@ public class UDPMulticastServer implements Runnable {
                 byte[] resData = responsePacket.getData();  // full data in packet
                 String responseText = new String(resData, StandardCharsets.UTF_8);
     
-                System.out.println("Message received is: " + responseText);
+            //    System.out.println("Message received is: " + responseText);
 
                 // check if peer has song
                 if (responseText.trim().equals("Confirm")) {
                     // peer has confirmed that they have the song the user is looking for
+                    didFindSong = true;
+
                     // accept file
                     Socket incomingFileSocket = new Socket(userIP, 4322);
                     byte[] contents = new byte[10000];
@@ -127,7 +132,9 @@ public class UDPMulticastServer implements Runnable {
                 break;
             }
         }
-        System.out.println("song not found");
+        if (!didFindSong) {
+            System.out.println("Song not found...");
+        }
         socket.close();
         serveUserRequests();
     }
