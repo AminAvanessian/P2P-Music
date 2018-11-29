@@ -93,8 +93,6 @@ public class UDPMulticastServer implements Runnable {
             if (!userIP.equals(currentUserIP)) {
                 byte[] resData = responsePacket.getData();  // full data in packet
                 String responseText = new String(resData, StandardCharsets.UTF_8);
-    
-            //    System.out.println("Message received is: " + responseText);
 
                 // check if peer has song
                 if (responseText.trim().equals("Confirm")) {
