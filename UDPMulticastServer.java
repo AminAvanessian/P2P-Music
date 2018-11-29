@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.io.Console;
 
 
+
 /* 
     P2P Protocol
     ------------
@@ -70,6 +71,7 @@ public class UDPMulticastServer implements Runnable {
 
         while (true) {
             if (didFindSong) {
+                // we already found a peer with the requested song
                 break;
             }
 
@@ -165,11 +167,9 @@ public class UDPMulticastServer implements Runnable {
                 // song name that the peer is looking for
                 String msg = new String(data, StandardCharsets.UTF_8);
 
-            //    System.out.println("Message is: " + msg);
-
                 // let peer know that we have the song the peer is looking for
                 if (userMusic.contains(msg.trim())) {
-                    String myMessage = "Confirm";
+                    String myMessage = "Confirm";   // send confirm message
                     byte[] myBytes = myMessage.getBytes();
                     DatagramPacket requestPacket = new DatagramPacket(myBytes, myBytes.length, group, port);
                     socket.send(requestPacket);
@@ -205,7 +205,6 @@ public class UDPMulticastServer implements Runnable {
                         contents1 = new byte[size]; 
                         bis.read(contents1, 0, size); 
                         os.write(contents1);
-                   //     System.out.print("Sending file ... " + (current*100) / fileLength + "% complete!");
                     }   
                     
                     os.flush();
