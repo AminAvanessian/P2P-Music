@@ -1,0 +1,2 @@
+javac UDPMulticastServer.java
+java UDPMulticastServer

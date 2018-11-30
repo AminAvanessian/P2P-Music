@@ -10,8 +10,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.ServerSocket;
 import java.io.Console;
-
-
+import javazoom.jl.player.*;
+import java.awt.Desktop;
 
 /* 
     P2P Protocol
@@ -35,19 +35,18 @@ public class UDPMulticastServer implements Runnable {
     // collection of songs owned by the user
     static HashSet<String> userMusic = new HashSet<String>();
 
-
     public static void searchForSongOnNetwork(String message, String ipAddress, int port) throws IOException {
         System.out.println("Searching for song...");
 
         if (userMusic.contains(message)) {
             System.out.println("Found song!");
-
-            // play song
+            //Plays song
             playSong(message + ".mp3");
+ 
 
             // ask user for next song to play
             serveUserRequests();
-            
+
             return;
         }
 
@@ -56,7 +55,7 @@ public class UDPMulticastServer implements Runnable {
         InetAddress group = InetAddress.getByName(ipAddress);
 
         // message byte array
-        byte[] msg = message.getBytes(); 
+        byte[] msg = message.getBytes();
 
         DatagramPacket requestPacket = new DatagramPacket(msg, msg.length, group, port);
         socket.joinGroup(group);
@@ -64,7 +63,7 @@ public class UDPMulticastServer implements Runnable {
 
         // get current user's IP address
         String currentAddress = InetAddress.getLocalHost().toString();
-        String currentUserIP = currentAddress.substring(currentAddress.indexOf("/")+1, currentAddress.length());
+        String currentUserIP = currentAddress.substring(currentAddress.indexOf("/") + 1, currentAddress.length());
 
         // get response from network
         boolean didFindSong = false;
@@ -76,9 +75,9 @@ public class UDPMulticastServer implements Runnable {
             }
 
             byte[] buffer = new byte[2048];
-            
+
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-            socket.setSoTimeout(5000);  // timeout after 5 seconds
+            socket.setSoTimeout(5000); // timeout after 5 seconds
             try {
                 socket.receive(responsePacket);
             } catch (SocketTimeoutException ex) {
@@ -88,10 +87,10 @@ public class UDPMulticastServer implements Runnable {
             // get the IP of the sender
             String userAddress = responsePacket.getSocketAddress().toString().substring(1);
             String userIP = userAddress.substring(0, userAddress.indexOf(":"));
-            
+
             // check if message received is from current user
             if (!userIP.equals(currentUserIP)) {
-                byte[] resData = responsePacket.getData();  // full data in packet
+                byte[] resData = responsePacket.getData(); // full data in packet
                 String responseText = new String(resData, StandardCharsets.UTF_8);
 
                 // check if peer has song
@@ -110,21 +109,24 @@ public class UDPMulticastServer implements Runnable {
 
                     // read file bytes
                     int bytesRead = 0;
-                    while((bytesRead = is.read(contents)) != -1) {
-                        bos.write(contents, 0, bytesRead); 
+                    while ((bytesRead = is.read(contents)) != -1) {
+                        bos.write(contents, 0, bytesRead);
                     }
-                    bos.flush(); 
-                    incomingFileSocket.close(); 
+                    bos.flush();
+                    incomingFileSocket.close();
                     bos.close();
                     fos.close();
 
-                //    System.out.println("File saved successfully!"); 
+                    // System.out.println("File saved successfully!");
 
                     // add song to local db
                     userMusic.add(message);
 
                     // play song
-                    playSong(message + ".mp3");
+                        // play song
+                        playSong(message + ".mp3");
+
+                        System.out.println("Error: Has a problem playing");
                 }
             }
 
@@ -144,7 +146,7 @@ public class UDPMulticastServer implements Runnable {
         MulticastSocket socket = new MulticastSocket(4321);
         InetAddress group = InetAddress.getByName(ipAddress);
         socket.joinGroup(group);
-        
+
         while (true) {
             buffer = null;
             buffer = new byte[2048];
@@ -157,54 +159,54 @@ public class UDPMulticastServer implements Runnable {
             String userIP = userAddress.substring(0, userAddress.indexOf(":"));
 
             String address = InetAddress.getLocalHost().toString();
-            String myIP = address.substring(address.indexOf("/")+1, address.length());
+            String myIP = address.substring(address.indexOf("/") + 1, address.length());
 
             if (!userIP.equals(myIP)) {
-                byte[] data = packet.getData();  // full data in packet
+                byte[] data = packet.getData(); // full data in packet
 
                 // song name that the peer is looking for
                 String msg = new String(data, StandardCharsets.UTF_8);
 
                 // let peer know that we have the song the peer is looking for
                 if (userMusic.contains(msg.trim())) {
-                    String myMessage = "Confirm";   // send confirm message
+                    String myMessage = "Confirm"; // send confirm message
                     byte[] myBytes = myMessage.getBytes();
                     DatagramPacket requestPacket = new DatagramPacket(myBytes, myBytes.length, group, port);
                     socket.send(requestPacket);
 
                     ServerSocket ssock = new ServerSocket(4322);
                     Socket mySocket = ssock.accept();
-                //    System.out.println("server socket opened..." + msg);
+                    // System.out.println("server socket opened..." + msg);
 
-                    //Specify the file
+                    // Specify the file
                     File musicDir = new File("Music");
                     File file = new File(musicDir, msg.trim() + ".mp3");
                     FileInputStream fis = new FileInputStream(file);
-                    BufferedInputStream bis = new BufferedInputStream(fis); 
-                    
-                    //Get socket's output stream
+                    BufferedInputStream bis = new BufferedInputStream(fis);
+
+                    // Get socket's output stream
                     OutputStream os = mySocket.getOutputStream();
-                            
-                    //Read File Contents into contents array 
+
+                    // Read File Contents into contents array
                     byte[] contents1;
-                    long fileLength = file.length(); 
+                    long fileLength = file.length();
                     long current = 0;
-                    
+
                     long start = System.nanoTime();
-                    
-                    while(current != fileLength) { 
+
+                    while (current != fileLength) {
                         int size = 10000;
                         if (fileLength - current >= size)
-                            current += size;    
-                        else { 
-                            size = (int) (fileLength - current); 
+                            current += size;
+                        else {
+                            size = (int) (fileLength - current);
                             current = fileLength;
-                        } 
-                        contents1 = new byte[size]; 
-                        bis.read(contents1, 0, size); 
+                        }
+                        contents1 = new byte[size];
+                        bis.read(contents1, 0, size);
                         os.write(contents1);
-                    }   
-                    
+                    }
+
                     os.flush();
                     bis.close();
                     // file transfer done, close the socket connection
@@ -228,8 +230,8 @@ public class UDPMulticastServer implements Runnable {
             if (file.isDirectory()) {
                 // is directory
             } else {
-                String ext = file.getName().substring(file.getName().length()-3, file.getName().length());
-                String fileName = file.getName().substring(0, file.getName().length()-4);
+                String ext = file.getName().substring(file.getName().length() - 3, file.getName().length());
+                String fileName = file.getName().substring(0, file.getName().length() - 4);
 
                 if (ext.equals("mp3")) {
                     // save mp3 file to hashset
@@ -240,15 +242,31 @@ public class UDPMulticastServer implements Runnable {
         }
     }
 
-    public static void playSong(String songName) {
+    /*
+    Open the OS's default music player with the song
+    */
+    public static void playSong(String songName){
+        try {
+            System.out.println("Playing Song: "+songName);
+            File file = new File("Music\\" + songName);
+            Desktop.getDesktop().open(file);      
+        } catch (IOException e) {
+            System.out.println("Error: Couldn't open file");
+        }
 
     }
 
+    /*
+    Takes the user input and tries to find song
+    */
     public static void serveUserRequests() {
         System.out.print("Enter song name: ");
         Console console = System.console();
         String songName = console.readLine();
-        
+        if(songName.equals("exit")){
+            System.exit(0);
+        }
+
         try {
             searchForSongOnNetwork(songName, ipAddress, 4321);
         } catch (Exception ex) {
@@ -270,10 +288,12 @@ public class UDPMulticastServer implements Runnable {
 
     @Override
     public void run() {
-       try {
-          receiveUDPMessage(ipAddress, 4321);
-       } catch (IOException ex) {
-          ex.printStackTrace();
-       }
+        try {
+            receiveUDPMessage(ipAddress, 4321);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }
+
+
