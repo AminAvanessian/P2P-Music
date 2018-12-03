@@ -30,7 +30,7 @@ import java.awt.Desktop;
 public class UDPMulticastServer implements Runnable {
 
 
-    // broadcast IP address
+    // broadcast IP address range
     static String ipAddress = "230.0.0.0";
 
     // collection of songs owned by the user
@@ -177,30 +177,28 @@ public class UDPMulticastServer implements Runnable {
 
                     ServerSocket ssock = new ServerSocket(4322);
                     Socket mySocket = ssock.accept();
-                    // System.out.println("server socket opened..." + msg);
 
-                    // Specify the file
+                    // specify the dir and the file and create streams
                     File musicDir = new File("Music");
                     File file = new File(musicDir, msg.trim() + ".mp3");
                     FileInputStream fis = new FileInputStream(file);
                     BufferedInputStream bis = new BufferedInputStream(fis);
 
-                    // Get socket's output stream
+                    // get socket output stream to send song
                     OutputStream os = mySocket.getOutputStream();
 
-                    // Read File Contents into contents array
+                    // read file contents into buffer
                     byte[] contents1;
                     long fileLength = file.length();
                     long current = 0;
 
-                    long start = System.nanoTime();
-
                     while (current != fileLength) {
                         int size = 10000;
-                        if (fileLength - current >= size)
+
+                        if (fileLength - current >= size) {
                             current += size;
-                        else {
-                            size = (int) (fileLength - current);
+                        } else {
+                            size = (int) (fileLength - current);    // get size
                             current = fileLength;
                         }
                         contents1 = new byte[size];
@@ -208,8 +206,9 @@ public class UDPMulticastServer implements Runnable {
                         os.write(contents1);
                     }
 
-                    os.flush();
+                    os.flush();     // flush stream
                     bis.close();
+                    
                     // file transfer done, close the socket connection
                     mySocket.close();
                     ssock.close();
