@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.ServerSocket;
 import java.io.Console;
-import javazoom.jl.player.*;
 import java.awt.Desktop;
 
 /* 
@@ -29,6 +28,8 @@ import java.awt.Desktop;
 */
 
 public class UDPMulticastServer implements Runnable {
+
+
     // broadcast IP address
     static String ipAddress = "230.0.0.0";
 
@@ -246,9 +247,11 @@ public class UDPMulticastServer implements Runnable {
     Open the OS's default music player with the song
     */
     public static void playSong(String songName){
+        //File Seperator for OS
+        String sep = System.getProperty("file.separator");
         try {
             System.out.println("Playing Song: "+songName);
-            File file = new File("Music\\" + songName);
+            File file = new File("Music" + sep + songName);
             Desktop.getDesktop().open(file);      
         } catch (IOException e) {
             System.out.println("Error: Couldn't open file");
@@ -274,7 +277,14 @@ public class UDPMulticastServer implements Runnable {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException { 
+        //Checks if the Music folder exists if not then creates one.
+        File f = new File("Music");
+        if(!f.exists() && !f.isDirectory())
+        {
+            f.mkdir();
+        }
+
         // get list of user's songs in directory
         getAllMusic();
 
